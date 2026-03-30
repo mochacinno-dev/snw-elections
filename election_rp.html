@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RP Election Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #141720;
+    --border: #2a2f3e;
+    --accent: #c8a84b;
+    --accent2: #4b7ec8;
+    --red: #c84b4b;
+    --green: #4bc87a;
+    --text: #e8e4d8;
+    --muted: #7a7f94;
+    --card: #1a1f2e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(200,168,75,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 100%, rgba(75,126,200,0.07) 0%, transparent 60%);
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(20,23,32,0.8);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-icon {
+    font-size: 1.8rem;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+  }
+
+  header span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: block;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .section-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  input[type="text"], input[type="number"], select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.95rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 3px;
+    width: 100%;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  select option { background: var(--surface); }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr;
+    gap: 0.7rem;
+    align-items: end;
+  }
+
+  .candidate-row {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.6rem;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .candidate-row:hover { border-color: #3a3f50; }
+
+  .candidate-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    position: absolute;
+    top: 0.5rem;
+    right: 0.7rem;
+  }
+
+  .prob-display {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.1rem;
+    color: var(--accent);
+    text-align: center;
+    margin-top: 0.3rem;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+
+  .btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.6rem 1.2rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-add {
+    border-color: #2a4a2e;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .btn-add:hover { background: rgba(75,200,122,0.08); border-color: var(--green); }
+
+  .btn-remove {
+    border-color: #3a2020;
+    color: var(--red);
+    padding: 0.4rem 0.7rem;
+    font-size: 0.75rem;
+  }
+  .btn-remove:hover { background: rgba(200,75,75,0.08); border-color: var(--red); }
+
+  .btn-run {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    letter-spacing: 0.2em;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: rgba(200,168,75,0.05);
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    text-transform: uppercase;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-run:hover {
+    background: rgba(200,168,75,0.12);
+    box-shadow: 0 0 30px rgba(200,168,75,0.15);
+  }
+
+  .btn-run:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: min(780px, 96vw);
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 2.5rem;
+    position: relative;
+  }
+
+  .modal-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .modal-header .election-type {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .modal-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--text);
+  }
+
+  .modal-header .population-line {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* COUNTING ANIMATION */
+  .counting-area {
+    margin-bottom: 1.5rem;
+  }
+
+  .ticker-top {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .votes-counted {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .progress-track {
+    width: 100%;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.2s ease-out;
+  }
+
+  /* CANDIDATE BARS */
+  .cand-bar-row {
+    margin-bottom: 1rem;
+  }
+
+  .cand-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.35rem;
+  }
+
+  .cand-name-display {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .cand-party-display {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-left: 0.5rem;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .cand-pct {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .cand-votes-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  .bar-track {
+    width: 100%;
+    height: 28px;
+    background: var(--surface);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s ease-out;
+    position: relative;
+  }
+
+  /* WINNER SECTION */
+  .winner-section {
+    display: none;
+    text-align: center;
+    padding: 2rem 0 1rem;
+    border-top: 1px solid var(--border);
+    margin-top: 1.5rem;
+  }
+
+  .winner-section.show { display: block; }
+
+  .winner-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.7rem;
+  }
+
+  .winner-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    animation: glow-in 0.6s ease-out forwards;
+  }
+
+  .winner-party {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.2rem;
+  }
+
+  .winner-stats {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+  }
+
+  .winner-stat {
+    text-align: center;
+  }
+
+  .winner-stat .value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .winner-stat .key {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .confetti-area {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .confetti-piece {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    top: -10px;
+    animation: fall linear forwards;
+    border-radius: 1px;
+  }
+
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  @keyframes glow-in {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .btn-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .btn-close:hover { border-color: var(--red); color: var(--red); }
+
+  .divider { height: 1px; background: var(--border); margin: 1.2rem 0; }
+
+  .tip {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+  }
+
+  .btn-reset {
+    margin-top: 1.2rem;
+    display: inline-block;
+  }
+
+  @media (max-width: 600px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .grid-3 > *:last-child { grid-column: 1 / -1; }
+    header h1 { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-icon">🗳️</div>
+  <div>
+    <h1>Election Simulator</h1>
+    <span>Roleplay Campaign System — v1.0</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- SECTION 1: ELECTION INFO -->
+  <div class="section-title">Election Setup</div>
+  <div class="card">
+    <div class="grid-2" style="margin-bottom:1rem">
+      <div>
+        <label>Nation / Region Name</label>
+        <input type="text" id="nation" placeholder="e.g. Republic of Valoria" />
+      </div>
+      <div>
+        <label>Reason for Election</label>
+        <select id="electionType">
+          <option value="Presidential Election">Presidential Election</option>
+          <option value="Parliamentary Election">Parliamentary Election</option>
+          <option value="Senate Election">Senate Election</option>
+          <option value="Prime Minister Election">Prime Minister Election</option>
+          <option value="State Governor Election">State Governor Election</option>
+          <option value="City / Chamber Election">City / Chamber Election</option>
+          <option value="State Chamber Election">State Chamber Election</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <label>Voting Population</label>
+      <input type="number" id="population" placeholder="e.g. 4200000" min="1000" />
+      <p class="tip">Total number of eligible voters in this election.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 2: CANDIDATES -->
+  <div class="section-title">Candidates & Parties</div>
+  <div class="card">
+    <div id="candidates-list"></div>
+    <div style="display:flex; gap:0.8rem; margin-top:0.5rem; flex-wrap:wrap">
+      <button class="btn btn-add" onclick="addCandidate()">＋ Add Candidate</button>
+      <p class="tip" style="margin:0; align-self:center">Min. 2 — Max. 20 candidates. Probabilities do not need to sum to 100.</p>
+    </div>
+  </div>
+
+  <!-- RUN -->
+  <button class="btn-run" id="runBtn" onclick="runElection()">
+    ⬡ &nbsp; Run Election
+  </button>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal" id="modalBox">
+    <div class="confetti-area" id="confettiArea"></div>
+    <button class="btn-close" onclick="closeModal()">✕</button>
+
+    <div class="modal-header">
+      <div class="election-type" id="res-type"></div>
+      <h2 id="res-nation"></h2>
+      <div class="population-line" id="res-pop"></div>
+    </div>
+
+    <div class="counting-area">
+      <div class="ticker-top">
+        <span>VOTES COUNTED</span>
+        <span id="pct-counted">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="mainProgress"></div></div>
+      <div id="bars-container"></div>
+    </div>
+
+    <div class="winner-section" id="winnerSection">
+      <div class="winner-label">🏆 &nbsp; Election Winner</div>
+      <div class="winner-name" id="winnerName"></div>
+      <div class="winner-party" id="winnerParty"></div>
+      <div class="winner-stats">
+        <div class="winner-stat">
+          <div class="value" id="winnerPct"></div>
+          <div class="key">Vote Share</div>
+        </div>
+        <div class="winner-stat">
+          <div class="value" id="winnerVotes"></div>
+          <div class="key">Votes</div>
+        </div>
+        <div class="winner-stat">
+          <div class="value" id="winnerMargin"></div>
+          <div class="key">Margin</div>
+        </div>
+      </div>
+      <button class="btn btn-reset" onclick="closeModal()">← New Election</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- PALETTE for bars ----
+const COLORS = [
+  '#c8a84b','#4b7ec8','#c84b4b','#4bc87a','#b84bc8',
+  '#c8774b','#4bc8c0','#7ac84b','#c84b8a','#4b8ac8',
+  '#c8c24b','#8a4bc8','#4bc864','#c8564b','#4b9fc8',
+  '#c8a04b','#4bc8a8','#c84b6e','#78c84b','#7b4bc8'
+];
+
+let candidates = [];
+let idCounter = 0;
+
+function addCandidate() {
+  if (candidates.length >= 20) return alert('Maximum 20 candidates.');
+  const id = idCounter++;
+  candidates.push({ id });
+  renderCandidates();
+}
+
+function removeCandidate(id) {
+  if (candidates.length <= 2) return alert('Minimum 2 candidates required.');
+  candidates = candidates.filter(c => c.id !== id);
+  renderCandidates();
+}
+
+function renderCandidates() {
+  const list = document.getElementById('candidates-list');
+  list.innerHTML = '';
+  candidates.forEach((c, i) => {
+    const color = COLORS[i % COLORS.length];
+    const row = document.createElement('div');
+    row.className = 'candidate-row';
+    row.innerHTML = `
+      <span class="candidate-num">#${i+1}</span>
+      <div class="grid-3">
+        <div>
+          <label>Candidate Name</label>
+          <input type="text" id="name-${c.id}" placeholder="Full name" />
+        </div>
+        <div>
+          <label>Party</label>
+          <input type="text" id="party-${c.id}" placeholder="Party name" />
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <button class="btn btn-remove" onclick="removeCandidate(${c.id})">✕ Remove</button>
+        </div>
+      </div>
+      <div style="margin-top:0.8rem">
+        <label>Approval / Probability Weight</label>
+        <input type="range" id="prob-${c.id}" min="1" max="100" value="50"
+          oninput="document.getElementById('prob-disp-${c.id}').textContent=this.value+'%'"
+          style="accent-color:${color}" />
+        <div class="prob-display" id="prob-disp-${c.id}" style="color:${color}">50%</div>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+// Init with 2 candidates
+addCandidate();
+addCandidate();
+
+// ---- ELECTION LOGIC ----
+function getFormData() {
+  const nation = document.getElementById('nation').value.trim() || 'Unknown Nation';
+  const type = document.getElementById('electionType').value;
+  const pop = parseInt(document.getElementById('population').value) || 1000000;
+
+  const cands = candidates.map((c, i) => ({
+    name: document.getElementById(`name-${c.id}`).value.trim() || `Candidate ${i+1}`,
+    party: document.getElementById(`party-${c.id}`).value.trim() || `Party ${i+1}`,
+    weight: parseInt(document.getElementById(`prob-${c.id}`).value),
+    color: COLORS[i % COLORS.length]
+  }));
+
+  return { nation, type, pop, cands };
+}
+
+function simulateVotes(cands, pop) {
+  const totalWeight = cands.reduce((s, c) => s + c.weight, 0);
+  // Normalize + add small random noise
+  let shares = cands.map(c => {
+    const base = c.weight / totalWeight;
+    const noise = (Math.random() - 0.5) * 0.06;
+    return Math.max(0.005, base + noise);
+  });
+  // Renormalize
+  const sum = shares.reduce((a,b) => a+b, 0);
+  shares = shares.map(s => s / sum);
+
+  // Distribute votes (poisson-ish)
+  let votes = shares.map(s => Math.round(s * pop));
+  // Fix rounding
+  const diff = pop - votes.reduce((a,b) => a+b, 0);
+  votes[0] += diff;
+
+  return cands.map((c, i) => ({ ...c, votes: votes[i], pct: shares[i] }));
+}
+
+function runElection() {
+  if (candidates.length < 2) return alert('Add at least 2 candidates.');
+  const { nation, type, pop, cands } = getFormData();
+
+  const results = simulateVotes(cands, pop);
+  results.sort((a,b) => b.votes - a.votes);
+
+  // Show modal
+  document.getElementById('res-type').textContent = type;
+  document.getElementById('res-nation').textContent = nation;
+  document.getElementById('res-pop').textContent = `Population: ${pop.toLocaleString()} eligible voters`;
+  document.getElementById('modal').classList.add('active');
+  document.getElementById('winnerSection').classList.remove('show');
+  document.getElementById('confettiArea').innerHTML = '';
+
+  // Build bars
+  const container = document.getElementById('bars-container');
+  container.innerHTML = '';
+  results.forEach((r, i) => {
+    const row = document.createElement('div');
+    row.className = 'cand-bar-row';
+    row.innerHTML = `
+      <div class="cand-bar-header">
+        <div>
+          <span class="cand-name-display">${r.name}</span>
+          <span class="cand-party-display">${r.party}</span>
+        </div>
+        <div style="text-align:right">
+          <span class="cand-pct" id="pct-${i}" style="color:${r.color}">0%</span>
+          <span class="cand-votes-count" id="vcnt-${i}" style="display:block">0 votes</span>
+        </div>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" id="bar-${i}" style="background:${r.color}22;border-left:3px solid ${r.color}"></div>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+
+  // Animate 10 seconds
+  const DURATION = 10000;
+  const STEPS = 120;
+  const interval = DURATION / STEPS;
+  let step = 0;
+
+  const ticker = setInterval(() => {
+    step++;
+    const progress = step / STEPS;
+    const eased = easeInOutCubic(progress);
+
+    document.getElementById('mainProgress').style.width = (progress * 100) + '%';
+    document.getElementById('pct-counted').textContent = Math.round(progress * 100) + '%';
+
+    results.forEach((r, i) => {
+      const currentVotes = Math.round(eased * r.votes);
+      const currentPct = (r.pct * eased * 100).toFixed(1);
+      document.getElementById(`bar-${i}`).style.width = (eased * r.pct * 100) + '%';
+      document.getElementById(`pct-${i}`).textContent = currentPct + '%';
+      document.getElementById(`vcnt-${i}`).textContent = currentVotes.toLocaleString() + ' votes';
+    });
+
+    if (step >= STEPS) {
+      clearInterval(ticker);
+      showWinner(results, pop);
+    }
+  }, interval);
+}
+
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2;
+}
+
+function showWinner(results, pop) {
+  const winner = results[0];
+  const runnerUp = results[1];
+  const margin = winner.votes - runnerUp.votes;
+
+  document.getElementById('winnerName').textContent = winner.name;
+  document.getElementById('winnerName').style.color = winner.color;
+  document.getElementById('winnerParty').textContent = winner.party;
+  document.getElementById('winnerPct').textContent = (winner.pct * 100).toFixed(2) + '%';
+  document.getElementById('winnerVotes').textContent = winner.votes.toLocaleString();
+  document.getElementById('winnerMargin').textContent = '+' + margin.toLocaleString();
+
+  document.getElementById('winnerSection').classList.add('show');
+
+  // Confetti
+  launchConfetti(winner.color);
+}
+
+function launchConfetti(mainColor) {
+  const area = document.getElementById('confettiArea');
+  const colors = [mainColor, '#ffffff', '#c8a84b', '#4bc87a', '#4b7ec8'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => {
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+      p.style.animationDuration = (1.5 + Math.random() * 2.5) + 's';
+      p.style.animationDelay = Math.random() * 1.5 + 's';
+      p.style.transform = `rotate(${Math.random()*360}deg)`;
+      p.style.width = (6 + Math.random() * 8) + 'px';
+      p.style.height = (6 + Math.random() * 8) + 'px';
+      p.style.borderRadius = Math.random() > 0.5 ? '50%' : '1px';
+      area.appendChild(p);
+    }, i * 30);
+  }
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+  document.getElementById('mainProgress').style.width = '0%';
+  document.getElementById('pct-counted').textContent = '0%';
+}
+</script>
+</body>
+</html>
